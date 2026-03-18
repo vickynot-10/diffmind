@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root {
+  --bg-0: #08090a;
+  --bg-1: #0f1011;
+  --bg-2: #141516;
+  --bg-3: #1c1c1f;
+  --bg-4: #232326;
+  --border-1: #23252a;
+  --border-2: #34343a;
+  --border-3: #3e3e44;
+  --text-1: #f7f8f8;
+  --text-2: #d0d6e0;
+  --text-3: #8a8f98;
+  --text-4: #62666d;
+  --accent: #7170ff;
+  --accent-hover: #828fff;
+  --accent-tint: #18182f;
+}
+
+body {
+  background: var(--bg-0);
+  color: var(--text-1);
+  -webkit-font-smoothing: antialiased;
+}
