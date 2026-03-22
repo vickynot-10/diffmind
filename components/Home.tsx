@@ -152,37 +152,77 @@ export default function Home() {
   }
 
   const [ghLoading, setGhLoading] = useState(false);
+  const [prFiles, setPrFiles] = useState<any[]>([]);
+  const [prMeta, setPrMeta] = useState<any>(null);
+  async function GetGithubRepo() {
+    try {
+      setGhLoading(true);
+      const res = await fetch("/api/github", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (!res.ok) return show(data.error, "error");
 
-
-
-async function GetGithubRepo() {
-  try {
-    setGhLoading(true)
-
-    const res = await fetch("/api/github", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
-    })
-
-    const data = await res.json()
-
-    if (!res.ok) {
-      return show(data.error, "error")
+      setPrFiles(data.files);
+      setPrMeta({ owner: data.owner, repo: data.repo, baseSha: data.baseSha });
+      setOpen(false);
+      show(
+        `Found ${data.files.length} file${data.files.length > 1 ? "s" : ""}`,
+        "success",
+      );
+    } catch (e: any) {
+      show(e.message ?? "Error fetching PR", "error");
+    } finally {
+      setGhLoading(false);
     }
-
-    setLanguage(data.language)
-    editorRef.current?.getOriginalEditor().setValue(data.oldCode)
-    editorRef.current?.getModifiedEditor().setValue(data.newCode)
-    setOpen(false)
-    show(`Loaded ${data.filename}`, "success")
-
-  } catch (e: any) {
-    show(e.message ?? "Error fetching PR", "error")
-  } finally {
-    setGhLoading(false)
   }
-}
+
+  const [fileLoading, setFileLoading] = useState(false);
+
+  async function loadFile(file: any) {
+    try {
+      setGhLoading(true);
+      setFileLoading(true);
+      const ext = file.filename.split(".").pop() ?? "js";
+      const EXT_TO_LANG: Record<string, string> = {
+        js: "javascript",
+        ts: "typescript",
+        py: "python",
+        go: "go",
+        rs: "rust",
+        java: "java",
+        cpp: "cpp",
+        rb: "ruby",
+      };
+
+      const res = await fetch("/api/github/file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          raw_url: file.raw_url,
+          filename: file.filename,
+          owner: prMeta.owner,
+          repo: prMeta.repo,
+          baseSha: prMeta.baseSha,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) return show(data.error, "error");
+
+      setLanguage(EXT_TO_LANG[ext] ?? "javascript");
+      editorRef.current?.getOriginalEditor().setValue(data.oldCode);
+      editorRef.current?.getModifiedEditor().setValue(data.newCode);
+
+      show(`Loaded ${file.filename}`, "success");
+    } catch (e: any) {
+      show(e.message ?? "Error loading file", "error");
+    } finally {
+      setFileLoading(false);
+      setGhLoading(false);
+    }
+  }
 
   return (
     <>
@@ -254,54 +294,101 @@ async function GetGithubRepo() {
           </div>
         </div>
 
-        <div className="flex flex-col rounded-[10px] border border-white/8 overflow-hidden">
-          <div className="grid grid-cols-2 border-b border-white/8">
-            <div className="flex items-center gap-2 px-4 py-2 border-r border-white/8 bg-[#0f1011]">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-400/70 shrink-0" />
-              <span className="text-[12px] font-medium text-[#8a8f98] tracking-tight">
-                Old version
+        <div>
+          {prFiles.length > 0 && (
+            <div className="flex flex-col gap-2 p-3 rounded-[10px] border border-white/8 bg-[#0f1011]">
+              <span className="text-[11px] text-[#62666d] uppercase tracking-wider font-medium">
+                Select file to analyze
               </span>
-              <span className="ml-auto text-[11px] tabular-nums text-[#3e3e44]">
-                {oldLines} {oldLines === 1 ? "line" : "lines"}
-              </span>
+              {prFiles.map((file) => (
+                <button
+                  key={file.filename}
+                  onClick={() => loadFile(file)}
+                  disabled={fileLoading}
+                  className="flex items-center justify-between px-3 py-2 rounded-lg border border-[#34343a] bg-[#141516] hover:border-[#3e3e44] hover:bg-[#1c1c1f] text-left transition-colors duration-100 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <span className="font-mono text-[12px] text-[#d0d6e0]">
+                    {file.filename}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[11px] text-green-400/70">
+                      +{file.additions}
+                    </span>
+                    <span className="text-[11px] text-red-400/70">
+                      -{file.deletions}
+                    </span>
+                    <span
+                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                        file.status === "modified"
+                          ? "bg-[rgba(240,191,0,0.1)] text-[#ffd500]"
+                          : file.status === "added"
+                            ? "bg-[rgba(39,166,68,0.1)] text-[#43bc58]"
+                            : "bg-[rgba(235,87,87,0.1)] text-[#ff8583]"
+                      }`}
+                    >
+                      {file.status}
+                    </span>
+                  </div>
+                </button>
+              ))}
             </div>
-
-            <div className="flex items-center gap-2 px-4 py-2 bg-[#0f1011]">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400/70 shrink-0" />
-              <span className="text-[12px] font-medium text-[#8a8f98] tracking-tight">
-                New version
-              </span>
-              <span className="ml-auto text-[11px] tabular-nums text-[#3e3e44]">
-                {newLines} {newLines === 1 ? "line" : "lines"}
-              </span>
-            </div>
-          </div>
-
-          <div className="resize-y overflow-auto border border-white/8 rounded-[10px]">
-            <DiffEditor
-              height="100%"
-              className="  min-h-100"
-              language={language}
-              theme="vs-dark"
-              original={OLD_CODE}
-              modified={NEW_CODE}
-              onMount={handleMount}
-              options={{
-                readOnly: false,
-                renderSideBySide: true,
-                originalEditable: true,
-                minimap: { enabled: false },
-                fontSize: 13,
-                lineHeight: 22,
-                padding: { top: 12, bottom: 12 },
-                scrollBeyondLastLine: false,
-                overviewRulerBorder: false,
-                renderOverviewRuler: false,
-                hideCursorInOverviewRuler: true,
-              }}
-            />
-          </div>
+          )}
         </div>
+        {fileLoading ? (
+          <div className="flex flex-col items-center justify-center gap-3 min-h-100 bg-[#1e1e1e]">
+            <Loader />
+            <span className="text-[12px] text-[#62666d]">Loading file...</span>
+          </div>
+        ) : (
+          <div className="flex flex-col rounded-[10px] border border-white/8 overflow-hidden">
+            <div className="grid grid-cols-2 border-b border-white/8">
+              <div className="flex items-center gap-2 px-4 py-2 border-r border-white/8 bg-[#0f1011]">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-400/70 shrink-0" />
+                <span className="text-[12px] font-medium text-[#8a8f98] tracking-tight">
+                  Old version
+                </span>
+                <span className="ml-auto text-[11px] tabular-nums text-[#3e3e44]">
+                  {oldLines} {oldLines === 1 ? "line" : "lines"}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 px-4 py-2 bg-[#0f1011]">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400/70 shrink-0" />
+                <span className="text-[12px] font-medium text-[#8a8f98] tracking-tight">
+                  New version
+                </span>
+                <span className="ml-auto text-[11px] tabular-nums text-[#3e3e44]">
+                  {newLines} {newLines === 1 ? "line" : "lines"}
+                </span>
+              </div>
+            </div>
+
+            <div className="resize-y overflow-auto border border-white/8 rounded-[10px]">
+              <DiffEditor
+                height="100%"
+                className="  min-h-100"
+                language={language}
+                theme="vs-dark"
+                original={OLD_CODE}
+                modified={NEW_CODE}
+                onMount={handleMount}
+                options={{
+                  readOnly: false,
+                  renderSideBySide: true,
+                  originalEditable: true,
+                  minimap: { enabled: false },
+                  fontSize: 13,
+                  lineHeight: 22,
+                  padding: { top: 12, bottom: 12 },
+                  scrollBeyondLastLine: false,
+                  overviewRulerBorder: false,
+                  renderOverviewRuler: false,
+                  hideCursorInOverviewRuler: true,
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         <div className=" flex flex-row items-center gap-5 justify-end">
           <button
