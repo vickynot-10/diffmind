@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { APP_URL } from "@/app.constants";
 import Header from "@/components/Header";
+import { Analytics } from "@vercel/analytics/react";
 import { Inter } from "next/font/google";
 
 const inter = Inter({
@@ -48,6 +49,7 @@ export default function RootLayout({
       <body>
         <Header />
         {children}
+        <Analytics />
       </body>
     </html>
   );
