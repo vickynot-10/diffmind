@@ -23,13 +23,15 @@ body {
   color: var(--text-1);
   -webkit-font-smoothing: antialiased;
 }
-button{
+button {
   cursor: pointer;
 }
+
 .analyze-btn {
-  box-shadow: 0 4px 32px 0 rgba(8,9,10,.6);
+  box-shadow: 0 4px 32px 0 rgba(8, 9, 10, 0.6);
   border-radius: 12px;
   background-color: #141516;
+  width: 180px;
 }
 
 ::-webkit-scrollbar {
@@ -38,7 +40,7 @@ button{
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f1011; /* same as your UI bg */
+  background: #0f1011; 
 }
 
 ::-webkit-scrollbar-thumb {
@@ -49,4 +51,38 @@ button{
 
 ::-webkit-scrollbar-thumb:hover {
   background: #3a3f45;
+} 
+.loader {
+  display: flex;
+  align-items: center;
+}
+
+.bar {
+  display: inline-block;
+  width: 3px;
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 10px;
+  animation: scale-up4 1s linear infinite;
+}
+
+.bar:nth-child(2) {
+  height: 15px;
+  margin: 0 5px;
+  animation-delay: 0.25s;
+}
+
+.bar:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+@keyframes scale-up4 {
+  20% {
+    background-color: #ffff;
+    transform: scaleY(1.5);
+  }
+
+  40% {
+    transform: scaleY(1);
+  }
 }

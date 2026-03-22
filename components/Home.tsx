@@ -4,11 +4,13 @@ import { DiffEditor, type Monaco } from "@monaco-editor/react";
 import LanguageSelect from "@/components/LanguageSelect";
 import { useState, useRef } from "react";
 import type { editor as MonacoEditor } from "monaco-editor";
-
+import Loader from "./Loader";
 export default function Home() {
   const [language, setLanguage] = useState("javascript");
   const [oldLines, setOldLines] = useState(1);
   const [newLines, setNewLines] = useState(1);
+  const [analysis, setAnalysis] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const editorRef = useRef<MonacoEditor.IStandaloneDiffEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const mountedRef = useRef(false);
@@ -37,6 +39,7 @@ export default function Home() {
 
   async function AnalyzeCode() {
     try {
+      setLoading(true);
       const oldCode = editorRef.current?.getOriginalEditor().getValue() ?? "";
       const newCode = editorRef.current?.getModifiedEditor().getValue() ?? "";
 
@@ -46,9 +49,12 @@ export default function Home() {
         body: JSON.stringify({ oldCode, newCode, language }),
       });
       const data = await res.json();
-      console.log(data);
+      const parsed = JSON.parse(data.analysis);
+      setAnalysis(parsed);
     } catch (e) {
       console.log(e);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -143,11 +149,57 @@ async function sendEmail(to, subject, message) {
       <div>
         <button
           onClick={AnalyzeCode}
-          className="analyze-btn px-3 py-3 flex flex-row items-center gap-3 border-[1]  border-[#acacac73]  "
+          disabled={loading}
+          className="analyze-btn px-3 py-3 flex flex-row items-center justify-center gap-3 border border-[#acacac73] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <IoAnalyticsOutline size={20} /> Analyze
+          {loading ? (
+            <Loader />
+          ) : (
+            <>
+              <IoAnalyticsOutline size={20} /> Analyze
+            </>
+          )}
         </button>
       </div>
+
+      {analysis &&
+        !loading &&
+        analysis.length > 0 &&
+        analysis.map((item) => (
+          <div
+            key={item.name}
+            className={`
+      bg-[#0f1011] border border-[#34343a] rounded-lg p-4
+      ${item.severity === "breaking" ? "border-l-2 border-l-[#eb5757] rounded-l-none!" : ""}
+      ${item.severity === "warning" ? "border-l-2 border-l-[#f0bf00] rounded-l-none!" : ""}
+      ${item.severity === "info" ? "border-l-2 border-l-[#7170ff] rounded-l-none!" : ""}
+    `}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <span
+                className={`
+        text-[10px] font-medium px-2 py-0.5 rounded
+        ${item.severity === "breaking" ? "bg-[rgba(235,87,87,0.12)] text-[#ff8583] border border-[rgba(235,87,87,0.2)]" : ""}
+        ${item.severity === "warning" ? "bg-[rgba(240,191,0,0.1)] text-[#ffd500] border border-[rgba(240,191,0,0.2)]" : ""}
+        ${item.severity === "info" ? "bg-[rgba(113,112,255,0.1)] text-[#828fff] border border-[rgba(113,112,255,0.2)]" : ""}
+      `}
+              >
+                {item.severity}
+              </span>
+              <span className="font-mono text-[13px] text-[#f7f8f8]">
+                {item.name}
+              </span>
+            </div>
+            <p className="text-[13px] text-[#d0d6e0] mb-1">{item.summary}</p>
+            <p className="text-[12px] text-[#8a8f98] mb-3">{item.details}</p>
+            <div className="bg-[#141516] rounded-md p-2 border border-[#23252a]">
+              <p className="text-[11px] text-[#8a8f98]">
+                <span className="text-[#d0d6e0] font-medium">Risk: </span>
+                {item.risk}
+              </p>
+            </div>
+          </div>
+        ))}
     </div>
   );
 }

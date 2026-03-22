@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Parser from "web-tree-sitter";
+import Groq from "groq-sdk"
 import path from "path";
 import {
   FUNCTION_NODES,
@@ -65,12 +66,11 @@ export async function POST(req: NextRequest) {
 
     const diff_facts = DiffFacts(oldFacts, newFacts);
 
-    return NextResponse.json(
-      { diff_facts },
-      {
-        status: 200,
-      },
-    );
+    const analysis = await GetAIResponse(diff_facts, language, oldCode, newCode)
+
+    return NextResponse.json({ analysis }, { status: 200 })
+
+
   } catch (e: any) {
     console.log("FULL ERROR:", e?.message, e?.stack);
     return NextResponse.json(
@@ -94,8 +94,8 @@ function walkIterative(root: any, visit: (n: any) => void) {
   }
 }
 
-function extractNodes(root_node: any, code: string, language: string) {
-  if (!root_node || !code || !language) return;
+function extractNodes(root_node: any, code: string, language: string): any[] {
+  if (!root_node || !code || !language) return [];
 
   const fn_type = FUNCTION_NODES[language] ?? FUNCTION_NODES.javascript;
   const functions_arr: any[] = [];
@@ -165,12 +165,12 @@ function DiffFacts(old_facts: any[], new_facts: any[]) {
   const newMap = new Map();
   for (let i = 0; i < old_facts.length; i++) {
     const fact = old_facts[i];
-  oldMap.set(fact.function_name, fact)
+    oldMap.set(fact.function_name, fact);
   }
 
   for (let j = 0; j < new_facts.length; j++) {
     const fact = new_facts[j];
-  newMap.set(fact.function_name, fact)
+    newMap.set(fact.function_name, fact);
   }
 
   for (const [name, newFn] of newMap) {
@@ -236,4 +236,55 @@ function DiffFacts(old_facts: any[], new_facts: any[]) {
     if (!newMap.has(name)) results.push({ name, type: "removed", changes: [] });
   }
   return results;
+}
+
+async function GetAIResponse(
+  diff: any[],
+  language: string,
+  old_code: string,
+  new_code: string,
+) {
+  const aiKey = process.env.GROK_API_KEY;
+  if (!aiKey) {
+    return "AI API key is not sets";
+  }
+  const client = new Groq({
+    apiKey: aiKey,
+  });
+  const prompt = `You are a senior code reviewer. Analyze these ${language} function changes.
+
+OLD CODE:
+${old_code}
+
+NEW CODE:
+${new_code}
+
+STRUCTURED DIFF (AST analysis):
+${JSON.stringify(diff, null, 2)}
+
+For each changed function return a JSON array:
+[
+  {
+    "name": "functionName",
+    "severity": "breaking" | "warning" | "info",
+    "summary": "one line explanation",
+    "details": "what changed and why it matters",
+    "risk": "what could go wrong"
+  }
+]
+
+Rules:
+- breaking = callers will break without changes
+- warning = behavior changed, callers should review  
+- info = minor improvement or refactor
+- If async was added but no await exists in the body, still flag as breaking but mention it is unnecessary
+- Use the actual code to verify the structured diff
+- Be concise, no fluff
+- Return ONLY the JSON array, no markdown, no extra text`
+  const response = await client.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    messages: [{ role: "user", content: prompt }],
+    max_tokens: 1024,
+  })
+  return response.choices[0].message.content
 }
