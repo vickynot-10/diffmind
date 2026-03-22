@@ -1,4 +1,4 @@
-export const APP_URL = "https://diffmind.vercel.app"
+export const APP_URL = "https://diffmindapp.vercel.app/"
 
 export const FUNCTION_NODES: Record<string, Set<string>> = {
   javascript: new Set([
