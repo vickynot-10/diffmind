@@ -107,7 +107,7 @@ Works with public repos. Private repos require a `GITHUB_TOKEN` in your environm
 ## Getting started
 
 ```bash
-git clone https://github.com/your-username/diffmind
+git clone https://github.com/vickynot-10/diffmind
 cd diffmind
 npm install
 ```
