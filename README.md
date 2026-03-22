@@ -118,10 +118,10 @@ cp node_modules/web-tree-sitter/tree-sitter.wasm public/wasm/
 cp node_modules/tree-sitter-wasms/out/*.wasm public/wasm/
 ```
 
-Create `.env.local`:
+Create `.env`:
 ```
-GROQ_API_KEY=your_groq_api_key
-GITHUB_TOKEN=your_github_token   # optional, for private repos
+GROK_API_KEY=your_groq_api_key
+GITHUB_REPO_TOKEN=your_github_token   # optional, for private repos
 ```
 
 Run:
@@ -135,8 +135,8 @@ npm run dev
 
 | Variable | Required | Description |
 |---|---|---|
-| `GROQ_API_KEY` | Yes | Groq API key (free at console.groq.com) |
-| `GITHUB_TOKEN` | No | GitHub personal access token for private repos |
+| `GROK_API_KEY` | Yes | Groq API key (free at console.groq.com) |
+| `GITHUB_REPO_TOKEN` | No | GitHub personal access token for private repos |
 
 ---
 
