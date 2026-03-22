@@ -24,11 +24,20 @@ type FixModalProps = {
 function FixModal({ item, onClose }: FixModalProps) {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
- function copyCode(code: string, index: number) {
-  navigator.clipboard.writeText(code.replace(/\\n/g, "\n"))
-  setCopiedIndex(index)
-  setTimeout(() => setCopiedIndex(null), 2000)
-}
+  function copyCode(code: string, index: number) {
+    const formated_code = formatCode(code);
+    navigator.clipboard.writeText(formated_code);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  }
+  function formatCode(code: string): string {
+    return code
+      .replace(/;\s*/g, ";\n")
+      .replace(/\{\s*/g, "{\n  ")
+      .replace(/\}\s*/g, "\n}")
+      .replace(/\n\s*\n/g, "\n")
+      .trim();
+  }
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -138,9 +147,9 @@ function FixModal({ item, onClose }: FixModalProps) {
                         )}
                       </button>
                     </div>
-                  <pre className="px-4 py-3 overflow-x-auto bg-[#0a0a0b] text-[12px] text-[#d0d6e0] font-mono leading-relaxed border-t border-[#23252a] m-0 whitespace-pre">
-  <code>{fix.code.replace(/\\n/g, "\n")}</code>
-</pre>
+                    <pre className="px-4 py-3 overflow-x-auto bg-[#0a0a0b] text-[12px] text-[#d0d6e0] font-mono leading-relaxed border-t border-[#23252a] m-0 whitespace-pre">
+                      <code>{formatCode(fix.code)}</code>
+                    </pre>
                   </div>
                 </div>
               ))}

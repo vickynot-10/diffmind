@@ -76,13 +76,3 @@ button {
   animation-delay: 0.5s;
 }
 
-@keyframes scale-up4 {
-  20% {
-    background-color: #ffff;
-    transform: scaleY(1.5);
-  }
-
-  40% {
-    transform: scaleY(1);
-  }
-}

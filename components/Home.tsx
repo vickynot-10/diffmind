@@ -57,10 +57,10 @@ export default function Home() {
   const editorRef = useRef<MonacoEditor.IStandaloneDiffEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const mountedRef = useRef(false);
-  const [open, setOpen] = useState(false);
+
   const [url, setUrl] = useState("");
-  const [oldCode, setOldCode] = useState(OLD_CODE)
-const [newCode, setNewCode] = useState(NEW_CODE)
+  const [oldCode, setOldCode] = useState(OLD_CODE);
+  const [newCode, setNewCode] = useState(NEW_CODE);
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   function handleMount(
@@ -136,19 +136,11 @@ const [newCode, setNewCode] = useState(NEW_CODE)
     }
   }
 
- function clearCode() {
-  setOldCode("")
-  setNewCode("")
-}
+  function clearCode() {
+    setOldCode("");
+    setNewCode("");
+  }
 
-  function handleToggle() {
-    setOpen((prev) => !prev);
-    setUrl("");
-  }
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter") handleSubmit();
-    if (e.key === "Escape") setOpen(false);
-  }
   function handleSubmit() {
     if (!url.trim()) return;
 
@@ -171,7 +163,7 @@ const [newCode, setNewCode] = useState(NEW_CODE)
 
       setPrFiles(data.files);
       setPrMeta({ owner: data.owner, repo: data.repo, baseSha: data.baseSha });
-      setOpen(false);
+
       show(
         `Found ${data.files.length} file${data.files.length > 1 ? "s" : ""}`,
         "success",
@@ -187,7 +179,7 @@ const [newCode, setNewCode] = useState(NEW_CODE)
 
   async function loadFile(file: any) {
     try {
-      setAnalysis([])
+      setAnalysis([]);
       setGhLoading(true);
       setFileLoading(true);
       const ext = file.filename.split(".").pop() ?? "js";
@@ -217,8 +209,8 @@ const [newCode, setNewCode] = useState(NEW_CODE)
       if (!res.ok) return show(data.error, "error");
 
       setLanguage(EXT_TO_LANG[ext] ?? "javascript");
-      setOldCode(data.oldCode)
-setNewCode(data.newCode)
+      setOldCode(data.oldCode);
+      setNewCode(data.newCode);
 
       show(`Loaded ${file.filename}`, "success");
     } catch (e: any) {
@@ -229,6 +221,14 @@ setNewCode(data.newCode)
     }
   }
 
+  function SaveGhUrl(e: any) {
+    setUrl(e.target.value);
+  }
+
+  function ClearGHUrl() {
+    setUrl("");
+  }
+
   return (
     <>
       <div className="flex flex-col gap-5 pt-15 px-5">
@@ -236,40 +236,21 @@ setNewCode(data.newCode)
           <span className="text-[#8a8f98] text-[13px]">Language</span>
           <LanguageSelect onSelect={(val: string) => SetnewLanguage(val)} />
 
-          <button
-            onClick={handleToggle}
-            className={[
-              "flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer outline-none",
-              "border transition-all duration-150 text-[13px] font-medium",
-              open
-                ? "border-white/20 bg-white/6 text-[#f7f8f8]"
-                : "border-white/10 bg-white/4 text-[#8a8f98] hover:border-white/20 hover:bg-white/6 hover:text-[#f7f8f8]",
-            ].join(" ")}
-          >
-            <SiGithub size={14} />
-            <span className="hidden sm:inline">GitHub</span>
-          </button>
-
-          <div
-            className={[
-              "flex items-center gap-2 overflow-hidden transition-all duration-200 ease-in-out",
-              open ? "w-72 opacity-100" : "w-0 opacity-0 pointer-events-none",
-            ].join(" ")}
-          >
+          <div className="flex items-center gap-2 flex-1 max-w-sm">
             <div className="flex items-center gap-2 w-full border border-white/10 bg-white/4 rounded-lg px-3 py-1.5 focus-within:border-white/25 focus-within:bg-white/6 transition-all duration-150">
+              <SiGithub size={13} className="text-[#8a8f98] shrink-0" />
               <input
                 type="text"
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                onKeyDown={handleKeyDown}
+                onChange={(e) => SaveGhUrl(e)}
+              
                 placeholder="github.com/org/repo/pull/123"
                 className="flex-1 bg-transparent outline-none border-none text-[12px] text-[#d0d6e0] placeholder:text-[#3e3e44] min-w-0"
-                autoFocus={open}
               />
               {url && (
                 <button
-                  onClick={() => setUrl("")}
-                  className="text-[#62666d] hover:text-[#8a8f98] transition-colors cursor-pointer border-none outline-none bg-transparent"
+                  onClick={ClearGHUrl}
+                  className="text-[#62666d] hover:text-[#8a8f98] transition-colors cursor-pointer border-none outline-none bg-transparent shrink-0"
                 >
                   <TbX size={12} />
                 </button>
@@ -288,13 +269,7 @@ setNewCode(data.newCode)
                   : "border-white/10 bg-transparent text-[#62666d]",
               ].join(" ")}
             >
-              {ghLoading ? (
-                <Loader />
-              ) : (
-                <>
-                  <TbArrowRight size={13} />
-                </>
-              )}
+              {ghLoading ? <Loader /> : <TbArrowRight size={13} />}
             </button>
           </div>
         </div>

@@ -301,6 +301,7 @@ Rules:
 - code in fixes must be actual ${language} code, not pseudocode
 - If async added but no await in body, flag as breaking and mention it is unnecessary
 - Be concise, no fluff
+
 - Return ONLY the JSON array, no markdown, no extra text`
   const response = await client.chat.completions.create({
     model: "llama-3.3-70b-versatile",
