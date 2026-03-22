@@ -4,6 +4,9 @@
 
 diffmind goes beyond line-by-line diffs. It parses your code into an Abstract Syntax Tree, extracts behavioral facts about every function, and uses AI to explain what actually changed — and what could break.
 
+
+## Live demo
+👉 https://diffmindapp.vercel.app
 ---
 
 ## Demo
