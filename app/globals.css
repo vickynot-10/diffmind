@@ -23,3 +23,30 @@ body {
   color: var(--text-1);
   -webkit-font-smoothing: antialiased;
 }
+button{
+  cursor: pointer;
+}
+.analyze-btn {
+  box-shadow: 0 4px 32px 0 rgba(8,9,10,.6);
+  border-radius: 12px;
+  background-color: #141516;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f1011; /* same as your UI bg */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2d31;
+  border-radius: 10px;
+  border: 2px solid #0f1011;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3f45;
+}
