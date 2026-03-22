@@ -20,7 +20,7 @@ export default function Header() {
             letterSpacing: "-1.5",
           }}
         >
-          Code Sense
+          DiffMind
         </span>
       </div>
     </header>
