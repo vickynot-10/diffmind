@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     if (!oldCode?.trim() || !newCode?.trim()) {
       return NextResponse.json(
-        { error: "Both old and new code are required" },
+        { msg: "Both old and new code are required" },
         { status: 400 },
       );
     }
@@ -68,11 +68,11 @@ export async function POST(req: NextRequest) {
 
     const analysis = await GetAIResponse(diff_facts, language, oldCode, newCode)
 
-    return NextResponse.json({ analysis }, { status: 200 })
+    return NextResponse.json({ analysis, "isFetched": true }, { status: 200 })
 
 
   } catch (e: any) {
-    console.log("FULL ERROR:", e?.message, e?.stack);
+
     return NextResponse.json(
       { error: e?.message ?? String(e) },
       { status: 500 },
@@ -176,8 +176,19 @@ function DiffFacts(old_facts: any[], new_facts: any[]) {
   for (const [name, newFn] of newMap) {
     const oldFn = oldMap.get(name);
     if (!oldFn) {
-      results.push({ name, type: "added", changes: [] });
-      continue;
+      results.push({
+        name,
+        type: "added",
+        changes: [],
+        facts: {
+          isAsync: newFn.isAsync,
+          paramCount: newFn.paramCount,
+          complexity: newFn.complexity,
+          hasSideEffects: newFn.hasSideEffects,
+          calls: newFn.calls,
+        }
+      })
+      continue
     }
 
     const changes: any[] = [];
@@ -251,7 +262,7 @@ async function GetAIResponse(
   const client = new Groq({
     apiKey: aiKey,
   });
-  const prompt = `You are a senior code reviewer. Analyze these ${language} function changes.
+ const prompt = `You are a senior code reviewer. Analyze these ${language} function changes.
 
 OLD CODE:
 ${old_code}
@@ -269,16 +280,17 @@ For each changed function return a JSON array:
     "severity": "breaking" | "warning" | "info",
     "summary": "one line explanation",
     "details": "what changed and why it matters",
-    "risk": "what could go wrong"
+    "risk": "specific actionable improvement or code suggestion, not obvious failure states"
   }
 ]
 
 Rules:
 - breaking = callers will break without changes
-- warning = behavior changed, callers should review  
+- warning = behavior changed, callers should review
 - info = minor improvement or refactor
-- If async was added but no await exists in the body, still flag as breaking but mention it is unnecessary
-- Use the actual code to verify the structured diff
+- For "added" functions: describe what the function does and suggest improvements or missing patterns
+- risk field must contain ACTIONABLE suggestions like: missing try/catch, no timeout handling, cache invalidation missing, no retry logic, missing error boundary — NOT obvious statements like "if X fails then Y wont work"
+- If async was added but no await exists in body, flag as breaking and mention it is unnecessary
 - Be concise, no fluff
 - Return ONLY the JSON array, no markdown, no extra text`
   const response = await client.chat.completions.create({

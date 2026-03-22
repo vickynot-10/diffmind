@@ -31,7 +31,7 @@ button {
   box-shadow: 0 4px 32px 0 rgba(8, 9, 10, 0.6);
   border-radius: 12px;
   background-color: #141516;
-  width: 180px;
+ 
 }
 
 ::-webkit-scrollbar {
