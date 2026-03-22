@@ -262,7 +262,7 @@ async function GetAIResponse(
   const client = new Groq({
     apiKey: aiKey,
   });
- const prompt = `You are a senior code reviewer. Analyze these ${language} function changes.
+  const prompt = `You are a senior code reviewer. Analyze these ${language} function changes.
 
 OLD CODE:
 ${old_code}
@@ -280,7 +280,14 @@ For each changed function return a JSON array:
     "severity": "breaking" | "warning" | "info",
     "summary": "one line explanation",
     "details": "what changed and why it matters",
-    "risk": "specific actionable improvement or code suggestion, not obvious failure states"
+    "risk": "specific actionable improvement, not obvious failure states",
+    "fixes": [
+      {
+        "title": "short fix title",
+        "description": "why this fix matters",
+        "code": "actual improved code snippet"
+      }
+    ]
   }
 ]
 
@@ -288,9 +295,11 @@ Rules:
 - breaking = callers will break without changes
 - warning = behavior changed, callers should review
 - info = minor improvement or refactor
-- For "added" functions: describe what the function does and suggest improvements or missing patterns
-- risk field must contain ACTIONABLE suggestions like: missing try/catch, no timeout handling, cache invalidation missing, no retry logic, missing error boundary — NOT obvious statements like "if X fails then Y wont work"
-- If async was added but no await exists in body, flag as breaking and mention it is unnecessary
+- For "added" functions: describe what it does and suggest improvements or missing patterns
+- risk must be ACTIONABLE: missing try/catch, no timeout, no retry logic, no cache invalidation, missing validation
+- fixes array must have 1-3 concrete improvements with real working code snippets
+- code in fixes must be actual ${language} code, not pseudocode
+- If async added but no await in body, flag as breaking and mention it is unnecessary
 - Be concise, no fluff
 - Return ONLY the JSON array, no markdown, no extra text`
   const response = await client.chat.completions.create({

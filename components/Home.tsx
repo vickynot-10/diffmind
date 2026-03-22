@@ -9,6 +9,7 @@ import Loader from "./Loader";
 import Snackbar, { useSnackbar } from "@/components/Snackbar";
 import { SiGithub } from "react-icons/si";
 import { TbX, TbArrowRight } from "react-icons/tb";
+import FixModal from "./FixModal";
 const OLD_CODE = `
   function fetchUser(id) {
   const user = db.query(id);
@@ -58,6 +59,9 @@ export default function Home() {
   const mountedRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
+  const [oldCode, setOldCode] = useState(OLD_CODE)
+const [newCode, setNewCode] = useState(NEW_CODE)
+  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   function handleMount(
     diffEditor: MonacoEditor.IStandaloneDiffEditor,
@@ -132,10 +136,10 @@ export default function Home() {
     }
   }
 
-  function clearCode() {
-    editorRef.current?.getModifiedEditor().setValue("");
-    editorRef.current?.getOriginalEditor().setValue("");
-  }
+ function clearCode() {
+  setOldCode("")
+  setNewCode("")
+}
 
   function handleToggle() {
     setOpen((prev) => !prev);
@@ -183,6 +187,7 @@ export default function Home() {
 
   async function loadFile(file: any) {
     try {
+      setAnalysis([])
       setGhLoading(true);
       setFileLoading(true);
       const ext = file.filename.split(".").pop() ?? "js";
@@ -212,8 +217,8 @@ export default function Home() {
       if (!res.ok) return show(data.error, "error");
 
       setLanguage(EXT_TO_LANG[ext] ?? "javascript");
-      editorRef.current?.getOriginalEditor().setValue(data.oldCode);
-      editorRef.current?.getModifiedEditor().setValue(data.newCode);
+      setOldCode(data.oldCode)
+setNewCode(data.newCode)
 
       show(`Loaded ${file.filename}`, "success");
     } catch (e: any) {
@@ -369,8 +374,8 @@ export default function Home() {
                 className="  min-h-100"
                 language={language}
                 theme="vs-dark"
-                original={OLD_CODE}
-                modified={NEW_CODE}
+                original={oldCode}
+                modified={newCode}
                 onMount={handleMount}
                 options={{
                   readOnly: false,
@@ -429,7 +434,7 @@ export default function Home() {
               <div className="flex items-center gap-2 mb-2">
                 <span
                   className={`
-        text-[10px] font-medium px-2 py-0.5 rounded
+        text-[10px] font-medium px-2 py-0.5 rounded capitalize
         ${item.severity === "breaking" ? "bg-[rgba(235,87,87,0.12)] text-[#ff8583] border border-[rgba(235,87,87,0.2)]" : ""}
         ${item.severity === "warning" ? "bg-[rgba(240,191,0,0.1)] text-[#ffd500] border border-[rgba(240,191,0,0.2)]" : ""}
         ${item.severity === "info" ? "bg-[rgba(113,112,255,0.1)] text-[#828fff] border border-[rgba(113,112,255,0.2)]" : ""}
@@ -443,11 +448,21 @@ export default function Home() {
               </div>
               <p className="text-[13px] text-[#d0d6e0] mb-1">{item.summary}</p>
               <p className="text-[12px] text-[#8a8f98] mb-3">{item.details}</p>
-              <div className="bg-[#141516] rounded-md p-2 border border-[#23252a]">
-                <p className="text-[11px] text-[#8a8f98]">
-                  <span className="text-[#d0d6e0] font-medium">Risk: </span>
-                  {item.risk}
-                </p>
+              <div className="flex items-center justify-between mt-3">
+                <div className="bg-[#141516] rounded-md p-2 border border-[#23252a] flex-1">
+                  <p className="text-[11px] text-[#8a8f98]">
+                    <span className="text-[#d0d6e0] font-medium">Risk: </span>
+                    {item.risk}
+                  </p>
+                </div>
+                {item.fixes?.length > 0 && (
+                  <button
+                    onClick={() => setSelectedItem(item)}
+                    className="ml-3 text-[11px] px-3 py-1.5 rounded-lg border border-[#34343a] text-[#8a8f98] hover:text-[#f7f8f8] hover:border-[#3e3e44] transition-colors cursor-pointer bg-transparent outline-none"
+                  >
+                    View fixes →
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -460,6 +475,9 @@ export default function Home() {
         />
       )}
       )
+      {selectedItem && (
+        <FixModal item={selectedItem} onClose={() => setSelectedItem(null)} />
+      )}
     </>
   );
 }
