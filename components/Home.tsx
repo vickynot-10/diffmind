@@ -430,7 +430,7 @@ export default function Home() {
                     {item.risk}
                   </p>
                 </div>
-                {item.fixes?.length > 0 && (
+                {item.fixes && item.fixes.length > 0 && (
                   <button
                     onClick={() => setSelectedItem(item)}
                     className="ml-3 text-[11px] px-3 py-1.5 rounded-lg border border-[#34343a] text-[#8a8f98] hover:text-[#f7f8f8] hover:border-[#3e3e44] transition-colors cursor-pointer bg-transparent outline-none"

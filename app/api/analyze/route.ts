@@ -300,6 +300,10 @@ Rules:
 - fixes array must have 1-3 concrete improvements with real working code snippets
 - code in fixes must be actual ${language} code, not pseudocode
 - If async added but no await in body, flag as breaking and mention it is unnecessary
+- fixes array should only contain fixes if there is a REAL risk — missing error handling for network calls, missing validation for user input, missing try/catch for async operations, missing cache invalidation
+- For trivial changes like print statements, constant changes, minor refactors — return fixes as empty array []
+- Do NOT suggest validation for simple print statements, logging, or purely cosmetic changes
+- Only suggest fixes that would actually prevent a bug or improve reliability in production
 - Be concise, no fluff
 
 - Return ONLY the JSON array, no markdown, no extra text`
