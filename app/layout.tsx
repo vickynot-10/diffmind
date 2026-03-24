@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { APP_URL } from "@/app.constants";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import Header from "@/components/Header";
 import { Analytics } from "@vercel/analytics/react";
 import { Inter } from "next/font/google";
@@ -10,33 +11,109 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "DiffMind — Semantic Code Diff Analyzer",
+  title:
+    "DiffMind — Free AI Code Diff Tool (No Login) | Analyze GitHub PR & Code Changes",
+
   description:
-    "Go beyond line diffs. DiffMind uses AST parsing and AI to explain what your code changes actually mean — breaking changes, complexity shifts, and actionable fixes.",
+    "DiffMind is a free AI-powered code diff tool — no signup required. Compare two code versions or analyze GitHub pull requests instantly. Detect breaking changes, understand logic differences, and get intelligent code review insights.",
+
   keywords: [
-    "code diff",
-    "semantic analysis",
-    "AST parser",
-    "code review",
-    "tree-sitter",
-    "AI code analyzer",
+    "AI code diff tool",
+    "semantic code diff",
+    "git diff alternative",
+    "code difference analyzer",
+    "compare code online",
+    "free code diff tool",
+    "online code diff tool no signup",
+    "compare code online free",
+    "no login code comparison tool",
+
+    "AST code analysis",
+    "tree-sitter analyzer",
+    "abstract syntax tree tool",
+    "code complexity analyzer",
+    "cyclomatic complexity checker",
+
+    "AI code review tool",
+    "AI developer tools",
+    "automated code review AI",
+    "code analysis using AI",
+    "ai code review tool free",
+
+    "github PR analyzer",
+    "pull request code review tool",
+    "github diff analyzer",
+    "code review automation",
+    "github pull request analyzer free",
+
+    "detect breaking changes in code",
+    "find bugs in code changes",
+    "analyze code changes impact",
+    "understand code differences",
+
+    "compare two code files and find logic changes",
+    "ai tool to analyze code differences",
+    "semantic diff tool for developers",
+    "nextjs code analysis tools",
+    "best code diff tool for developers",
+
+    "diffmind",
+    "diffmind app",
   ],
+
   authors: [{ name: "Vicky" }],
+  creator: "Vicky",
+  publisher: "DiffMind",
+
+  metadataBase: new URL(APP_URL),
+
+  alternates: {
+    canonical: "/",
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+
   openGraph: {
-    title: "DiffMind — Semantic Code Diff Analyzer",
+    title:
+      "Free AI Code Diff Tool — No Login Required | DiffMind",
     description:
-      "Go beyond line diffs. DiffMind uses AST parsing and AI to explain what your code changes actually mean.",
+      "Compare code instantly or analyze GitHub pull requests with AI. No signup required. Detect breaking changes and understand code differences smarter.",
     url: APP_URL,
     siteName: "DiffMind",
     type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: `${APP_URL}/og.png`,
+        width: 1200,
+        height: 630,
+        alt: "DiffMind AI Code Diff Tool",
+      },
+    ],
   },
+
   twitter: {
     card: "summary_large_image",
-    title: "DiffMind — Semantic Code Diff Analyzer",
+    title: "Free AI Code Diff Tool (No Login) — DiffMind",
     description:
-      "Go beyond line diffs. DiffMind uses AST parsing and AI to explain what your code changes actually mean.",
+      "Analyze GitHub PRs or compare code instantly. No signup required. AI-powered semantic diff analysis.",
+    images: [`${APP_URL}/og.png`],
   },
-  metadataBase: new URL(APP_URL),
 };
 
 export default function RootLayout({
@@ -46,10 +123,34 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.className}>
+      <head>
+        <link rel="canonical" href={APP_URL} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "DiffMind",
+              applicationCategory: "DeveloperApplication",
+              operatingSystem: "Web",
+              description:
+                "Free AI-powered code diff tool with no signup required. Compare code or analyze GitHub pull requests instantly.",
+              url: APP_URL,
+              author: {
+                "@type": "Person",
+                name: "Vicky",
+              },
+            }),
+          }}
+        />
+      </head>
+
       <body>
         <Header />
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

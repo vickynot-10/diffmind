@@ -10,42 +10,6 @@ import Snackbar, { useSnackbar } from "@/components/Snackbar";
 import { SiGithub } from "react-icons/si";
 import { TbX, TbArrowRight } from "react-icons/tb";
 import FixModal from "./FixModal";
-const OLD_CODE = `
-  function fetchUser(id) {
-  const user = db.query(id);
-  return user;
-}
-
-function calculateTotal(items) {
-  let total = 0;
-  for (let i = 0; i < items.length; i++) {
-    total += items[i].price;
-  }
-  return total;
-}
-
-function sendEmail(to, message) {
-  mailer.send(to, message);
-}
-  `;
-const NEW_CODE = `
-async function fetchUser(id) {
-  const cached = await cache.get(id);
-  if (cached) return cached;
-  const user = await db.query(id);
-  await cache.set(id, user);
-  return user;
-}
-
-function calculateTotal(items) {
-  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-}
-
-async function sendEmail(to, subject, message) {
-  await mailer.send({ to, subject });
-  logger.info("email sent", { to });
-}
-  `;
 
 export default function Home() {
   const { snackbar, show, hide } = useSnackbar();
@@ -59,8 +23,8 @@ export default function Home() {
   const mountedRef = useRef(false);
 
   const [url, setUrl] = useState("");
-  const [oldCode, setOldCode] = useState(OLD_CODE);
-  const [newCode, setNewCode] = useState(NEW_CODE);
+  const [oldCode, setOldCode] = useState("");
+  const [newCode, setNewCode] = useState("");
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   function handleMount(
@@ -243,7 +207,6 @@ export default function Home() {
                 type="text"
                 value={url}
                 onChange={(e) => SaveGhUrl(e)}
-              
                 placeholder="github.com/org/repo/pull/123"
                 className="flex-1 bg-transparent outline-none border-none text-[12px] text-[#d0d6e0] placeholder:text-[#3e3e44] min-w-0"
               />
@@ -314,6 +277,12 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        <div className="text-center text-[12px] text-[#8a8f98] mt-2">
+          Compare two versions of your code or paste a
+          <span className="text-[#d0d6e0]"> GitHub PR URL</span> to analyze
+          changes
+        </div>
         {fileLoading ? (
           <div className="flex flex-col items-center justify-center gap-3 min-h-100 bg-[#1e1e1e]">
             <Loader />
@@ -358,6 +327,7 @@ export default function Home() {
                   originalEditable: true,
                   minimap: { enabled: false },
                   fontSize: 13,
+
                   lineHeight: 22,
                   padding: { top: 12, bottom: 12 },
                   scrollBeyondLastLine: false,
@@ -449,7 +419,7 @@ export default function Home() {
           onClose={hide}
         />
       )}
-      )
+
       {selectedItem && (
         <FixModal item={selectedItem} onClose={() => setSelectedItem(null)} />
       )}
