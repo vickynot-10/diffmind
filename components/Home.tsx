@@ -10,7 +10,7 @@ import Snackbar, { useSnackbar } from "@/components/Snackbar";
 import { SiGithub } from "react-icons/si";
 import { TbX, TbArrowRight } from "react-icons/tb";
 import FixModal from "./FixModal";
-
+import { IoPlay } from "react-icons/io5";
 export default function Home() {
   const { snackbar, show, hide } = useSnackbar();
   const [language, setLanguage] = useState("javascript");
@@ -23,8 +23,8 @@ export default function Home() {
   const mountedRef = useRef(false);
 
   const [url, setUrl] = useState("");
-  const [oldCode, setOldCode] = useState("");
-  const [newCode, setNewCode] = useState("");
+  const [oldCode, setOldCode] = useState("// Paste Your Old Code Here");
+  const [newCode, setNewCode] = useState("//  Paste Your New Code Here");
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   function handleMount(
@@ -52,7 +52,7 @@ export default function Home() {
   async function AnalyzeCode() {
     try {
       setLoading(true);
-      const oldCode = editorRef.current?.getOriginalEditor().getValue() ?? "";
+
       if (
         !oldCode ||
         !oldCode.length ||
@@ -61,8 +61,6 @@ export default function Home() {
       ) {
         return show("Original Code is Required", "error");
       }
-
-      const newCode = editorRef.current?.getModifiedEditor().getValue() ?? "";
 
       if (
         !newCode ||
@@ -193,6 +191,54 @@ export default function Home() {
     setUrl("");
   }
 
+  function AddDemoCode() {
+    setOldCode(`function fetchUser(id) {
+  const user = db.query(
+    'SELECT * FROM users WHERE id = ?',
+    [id]
+  );
+  return user;
+}
+
+function calculateTotal(items) {
+  let total = 0;
+  for (let i = 0; i < items.length; i++) {
+    total += items[i].price;
+  }
+  return total;
+}
+
+function sendEmail(to, message) {
+  mailer.send(to, message);
+}`);
+
+    setNewCode(`async function fetchUser(id) {
+  const cached = await cache.get(id);
+  if (cached) return cached;
+
+  const user = await db.query(
+    'SELECT * FROM users WHERE id = ?',
+    [id]
+  );
+  await cache.set(id, user, 300);
+  logger.info('cache miss', { id });
+  return user;
+}
+
+function calculateTotal(items) {
+  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+}
+
+async function sendEmail(to, subject, message) {
+  await mailer.send({ to, subject, body: message });
+  logger.info('email sent', { to });
+}`);
+
+    setTimeout(() => {
+      AnalyzeCode();
+    }, 500);
+  }
+
   return (
     <>
       <div className="flex flex-col gap-5 pt-15 px-5">
@@ -278,10 +324,30 @@ export default function Home() {
           )}
         </div>
 
-        <div className="text-center text-[12px] text-[#8a8f98] mt-2">
-          Compare two versions of your code or paste a
-          <span className="text-[#d0d6e0]"> GitHub PR URL</span> to analyze
-          changes
+        <div className="  flex flex-row  justify-between mt-2">
+          <div className=" text-[12px] text-[#8a8f98]  m-0">
+            Compare two versions of your code or paste a
+            <span className="text-[#d0d6e0]"> GitHub PR URL</span> to analyze
+            changes
+          </div>
+
+          <div className=" flex flex-row items-center gap-3">
+            <button
+              onClick={clearCode}
+              className="analyze-btn px-3 py-2 flex flex-row items-center justify-center gap-3 border border-[#acacac73] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <MdClear size={20} /> Clear
+            </button>
+
+            <button
+              onClick={AddDemoCode}
+              disabled={loading}
+              className="analyze-btn px-3 py-2 flex flex-row items-center justify-center gap-3 border border-[#acacac73] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <IoPlay size={20} />
+              Try Now
+            </button>
+          </div>
         </div>
         {fileLoading ? (
           <div className="flex flex-col items-center justify-center gap-3 min-h-100 bg-[#1e1e1e]">
@@ -341,13 +407,6 @@ export default function Home() {
         )}
 
         <div className=" flex flex-row items-center gap-5 justify-end">
-          <button
-            onClick={clearCode}
-            className="analyze-btn px-3 py-3 flex flex-row items-center justify-center gap-3 border border-[#acacac73] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <MdClear size={20} /> Clear
-          </button>
-
           <button
             onClick={AnalyzeCode}
             disabled={loading}
