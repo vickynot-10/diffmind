@@ -4,18 +4,33 @@ export async function POST(req: NextRequest) {
   try {
     const { raw_url, filename, owner, repo, baseSha } = await req.json()
 
+    if (!baseSha || !filename || !owner || !repo) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    }
+
     const newRes = await fetch(raw_url)
+    if (!newRes.ok) {
+      return NextResponse.json({ error: "Failed to fetch new file" }, { status: 502 })
+    }
     const newCode = await newRes.text()
 
-    const oldRes = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/${filename}?ref=${baseSha}`,
-      { headers: { Accept: "application/vnd.github.v3+json", Authorization: `Bearer ${process.env.GITHUB_REPO_TOKEN}` } }
-    )
-    const oldData = await oldRes.json()
-    
-    const oldCode = Buffer.from(oldData.content, "base64").toString("utf-8")
+    const encodedFilename = filename.split("/").map(encodeURIComponent).join("/")
+    const oldRawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${baseSha}/${encodedFilename}`
 
-    return NextResponse.json({ oldCode, newCode })
+    const oldRes = await fetch(oldRawUrl, {
+      headers: process.env.GITHUB_REPO_TOKEN
+        ? { Authorization: `Bearer ${process.env.GITHUB_REPO_TOKEN}` }
+        : {},
+    })
+
+   
+    const oldCode = oldRes.ok ? await oldRes.text() : null
+
+    return NextResponse.json({
+      oldCode,          
+      newCode,
+      isNewFile: !oldRes.ok,
+    })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }

@@ -19,6 +19,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "URL is required" }, { status: 400 })
         }
 
+        if (!process.env.GITHUB_REPO_TOKEN) {
+            return NextResponse.json({ error: "GITHUB_REPO_TOKEN not set" }, { status: 500 })
+        }
+
+       
+        const GH_HEADERS = {
+            Accept: "application/vnd.github.v3+json",
+            Authorization: `Bearer ${process.env.GITHUB_REPO_TOKEN}`,
+        }
+
         const parts = url.replace("https://", "").split("/")
         const owner = parts[1]
         const repo = parts[2]
@@ -27,14 +37,20 @@ export async function POST(req: NextRequest) {
         if (!owner || !repo || !pull_number) {
             return NextResponse.json({ error: "Invalid GitHub PR URL" }, { status: 400 })
         }
+   
 
         const prRes = await fetch(
             `https://api.github.com/repos/${owner}/${repo}/pulls/${pull_number}`,
-            { headers: { Accept: "application/vnd.github.v3+json" } }
+            { headers: GH_HEADERS }
         )
 
+    
         if (!prRes.ok) {
-            return NextResponse.json({ error: "PR not found or repo is private" }, { status: 400 })
+            const err = await prRes.json().catch(() => ({}))
+            return NextResponse.json(
+                { error: `PR not found or repo is private or repo is old: ${err.message ?? prRes.statusText}` },
+                { status: 400 }
+            )
         }
 
         const prData = await prRes.json()
@@ -42,7 +58,7 @@ export async function POST(req: NextRequest) {
 
         const filesRes = await fetch(
             `https://api.github.com/repos/${owner}/${repo}/pulls/${pull_number}/files`,
-            { headers: { Accept: "application/vnd.github.v3+json", Authorization: `Bearer ${process.env.GITHUB_REPO_TOKEN}` } }
+            { headers: GH_HEADERS }
         )
 
         if (!filesRes.ok) {

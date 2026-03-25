@@ -1,8 +1,8 @@
 "use client";
 import { IoAnalyticsOutline } from "react-icons/io5";
-import { DiffEditor, type Monaco } from "@monaco-editor/react";
+import { DiffEditor, type Monaco, Editor } from "@monaco-editor/react";
 import LanguageSelect from "@/components/LanguageSelect";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { editor as MonacoEditor } from "monaco-editor";
 import { MdClear } from "react-icons/md";
 import Loader from "./Loader";
@@ -26,6 +26,15 @@ export default function Home() {
   const [oldCode, setOldCode] = useState("// Paste Your Old Code Here");
   const [newCode, setNewCode] = useState("//  Paste Your New Code Here");
   const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  const [isMobile, setIsMobile] = useState(false);
+  const [view, setView] = useState<"old" | "new">("old");
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   function handleMount(
     diffEditor: MonacoEditor.IStandaloneDiffEditor,
@@ -238,11 +247,20 @@ async function sendEmail(to, subject, message) {
       AnalyzeCode();
     }, 500);
   }
+  const timeoutRef = useRef<any>(null);
 
+  function handleChange(val: string | undefined) {
+    clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(() => {
+      if (view === "old") setOldCode(val || "");
+      else setNewCode(val || "");
+    }, 300); // delay
+  }
   return (
     <>
       <div className="flex flex-col gap-5 pt-15 px-5">
-        <div className="flex flex-row w-full items-center gap-3">
+        <div className="flex flex-col sm:flex-row w-full items-start sm:items-center gap-3">
           <span className="text-[#8a8f98] text-[13px]">Language</span>
           <LanguageSelect onSelect={(val: string) => SetnewLanguage(val)} />
 
@@ -323,18 +341,17 @@ async function sendEmail(to, subject, message) {
             </div>
           )}
         </div>
-
-        <div className="  flex flex-row  justify-between mt-2">
-          <div className=" text-[12px] text-[#8a8f98]  m-0">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-2 text-center sm:text-left">
+          <div className="text-[12px] text-[#8a8f98]">
             Compare two versions of your code or paste a
             <span className="text-[#d0d6e0]"> GitHub PR URL</span> to analyze
             changes
           </div>
 
-          <div className=" flex flex-row items-center gap-3">
+          <div className="flex flex-row items-center justify-center sm:justify-end gap-3 w-full sm:w-auto">
             <button
               onClick={clearCode}
-              className="analyze-btn px-3 py-2 flex flex-row items-center justify-center gap-3 border border-[#acacac73] disabled:cursor-not-allowed disabled:opacity-50"
+              className="analyze-btn px-3 py-2 flex items-center justify-center gap-3 border border-[#acacac73] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <MdClear size={20} /> Clear
             </button>
@@ -342,7 +359,7 @@ async function sendEmail(to, subject, message) {
             <button
               onClick={AddDemoCode}
               disabled={loading}
-              className="analyze-btn px-3 py-2 flex flex-row items-center justify-center gap-3 border border-[#acacac73] disabled:cursor-not-allowed disabled:opacity-50"
+              className="analyze-btn px-3 py-2 flex items-center justify-center gap-3 border border-[#acacac73] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <IoPlay size={20} />
               Try Now
@@ -379,29 +396,55 @@ async function sendEmail(to, subject, message) {
             </div>
 
             <div className="resize-y overflow-auto border border-white/8 rounded-[10px]">
-              <DiffEditor
-                height="100%"
-                className="  min-h-100"
-                language={language}
-                theme="vs-dark"
-                original={oldCode}
-                modified={newCode}
-                onMount={handleMount}
-                options={{
-                  readOnly: false,
-                  renderSideBySide: true,
-                  originalEditable: true,
-                  minimap: { enabled: false },
-                  fontSize: 13,
+              {isMobile ? (
+                <div className="flex flex-col">
+                  <div className="flex mb-2 border border-white/10 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setView("old")}
+                      className={`flex-1 py-2 text-[12px] ${
+                        view === "old" ? "bg-red-500/20" : "bg-transparent"
+                      }`}
+                    >
+                      Old
+                    </button>
+                    <button
+                      onClick={() => setView("new")}
+                      className={`flex-1 py-2 text-[12px] ${
+                        view === "new" ? "bg-green-500/20" : "bg-transparent"
+                      }`}
+                    >
+                      New
+                    </button>
+                  </div>
 
-                  lineHeight: 22,
-                  padding: { top: 12, bottom: 12 },
-                  scrollBeyondLastLine: false,
-                  overviewRulerBorder: false,
-                  renderOverviewRuler: false,
-                  hideCursorInOverviewRuler: true,
-                }}
-              />
+                  <Editor
+                    height="400px"
+                    language={language}
+                    theme="vs-dark"
+                    value={view === "old" ? oldCode : newCode}
+                    onChange={handleChange}
+                    options={{
+                      minimap: { enabled: false },
+                      fontSize: 13,
+                    }}
+                  />
+                </div>
+              ) : (
+                <DiffEditor
+                  height="100%"
+                  className="min-h-100"
+                  language={language}
+                  theme="vs-dark"
+                  original={oldCode}
+                  modified={newCode}
+                  onMount={handleMount}
+                  options={{
+                    renderSideBySide: true,
+                    minimap: { enabled: false },
+                    fontSize: 13,
+                  }}
+                />
+              )}
             </div>
           </div>
         )}
