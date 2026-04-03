@@ -4,6 +4,7 @@ import { APP_URL } from "@/app.constants";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Header from "@/components/Header";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Inter } from "next/font/google";
 import Footer from "@/components/Footer";
 const inter = Inter({
